@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TG Stars Cashback</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 40px;
+        }
+        button {
+            width: 100%;
+            max-width: 300px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #e0e0e0;
+        }
+        #policy {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #sell-form {
+            display: none;
+            width: 100%;
+            max-width: 300px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TG Stars Cashback</h1>
+    <button id="connect-wallet">Connect Wallet</button>
+    <button id="sell-stars" disabled>Sell Stars</button>
+    <button id="support">Support</button>
+
+    <div id="policy">
+        <p>Вы соглашаетесь, что все действия на свой страх и риск. Принимаете политику конфиденциальности?</p>
+        <button id="accept-policy">Принять</button>
+    </div>
+
+    <div id="sell-form">
+        <label>Количество звёзд (мин 500, макс 100000):</label>
+        <input type="number" id="amount" min="500" max="100000" value="500">
+        <label>Формат вывода:</label>
+        <select id="format">
+            <option value="TON">TON</option>
+            <option value="USDT">USDT</option>
+        </select>
+        <button id="confirm-sell">Подтвердить</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+
+        // Connect Wallet (симуляция; позже интегрируй TON Connect SDK)
+        document.getElementById('connect-wallet').addEventListener('click', () => {
+            // Здесь код для привязки TON-кошелька (e.g. via @tonconnect/ui)
+            alert('Кошелёк привязан (симуляция).');
+            document.getElementById('sell-stars').disabled = false;
+        });
+
+        // Sell Stars
+        document.getElementById('sell-stars').addEventListener('click', () => {
+            document.getElementById('policy').style.display = 'block';
+        });
+
+        // Accept Policy
+        document.getElementById('accept-policy').addEventListener('click', () => {
+            document.getElementById('policy').style.display = 'none';
+            document.getElementById('sell-form').style.display = 'block';
+        });
+
+        // Confirm Sell (симуляция; позже отправь данные в бот для создания инвойса)
+        document.getElementById('confirm-sell').addEventListener('click', () => {
+            const amount = document.getElementById('amount').value;
+            const format = document.getElementById('format').value;
+            if (amount < 500 || amount > 100000) {
+                alert('Неверное количество (500-100000).');
+                return;
+            }
+            alert(`Вывод: ${amount} звёзд в ${format} (симуляция). Звёзды отправлены в бот, ожидание 21 день.`);
+            // Здесь: tg.sendData({amount, format}) в бот для обработки
+            tg.close();
+        });
+
+        // Support
+        document.getElementById('support').addEventListener('click', () => {
+            // Перекидываем в support-бота (создай отдельно)
+            tg.openTelegramLink('https://t.me/TGStarsSupport_bot'); // Замени на реальный
+        });
+    </script>
+</body>
+</html>
