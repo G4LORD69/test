@@ -5,58 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TG Stars Cashback</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Для TON Connect: Добавь через CDN или npm; здесь CDN для простоты -->
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         body {
-            font-family: sans-serif;
-            background-color: #ffffff;
-            color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             height: 100vh;
+            box-sizing: border-box;
         }
         h1 {
-            font-size: 24px;
-            margin-bottom: 40px;
+            font-size: 22px;
+            margin-bottom: 30px;
+            text-align: center;
         }
         button {
             width: 100%;
-            max-width: 300px;
-            padding: 15px;
-            margin: 10px 0;
-            background-color: #f0f0f0;
-            border: 1px solid #ddd;
+            max-width: 320px;
+            padding: 12px;
+            margin: 8px 0;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
         button:disabled {
-            background-color: #e0e0e0;
+            background-color: #e9ecef;
             cursor: not-allowed;
         }
         button:hover:not(:disabled) {
-            background-color: #e0e0e0;
+            background-color: #f8f9fa;
         }
-        #policy {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-        #sell-form {
+        #policy, #sell-form, #summary {
             display: none;
             width: 100%;
-            max-width: 300px;
+            max-width: 320px;
+            margin-top: 20px;
         }
         input, select {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            margin: 8px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: #ffffff;
         }
+        label {
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        #summary p {
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        /* Иконки для кнопок (используем emoji как плейсхолдер) */
+        button::before {
+            content: '';
+            margin-right: 8px;
+        }
+        #connect-wallet::before { content: '🔗'; }
+        #sell-stars::before { content: '💰'; }
+        #support::before { content: '❓'; }
     </style>
 </head>
 <body>
@@ -67,7 +96,10 @@
 
     <div id="policy">
         <p>Вы соглашаетесь, что все действия на свой страх и риск. Принимаете политику конфиденциальности?</p>
-        <button id="accept-policy">Принять</button>
+        <label class="checkbox-label">
+            <input type="checkbox" id="accept-checkbox"> Я принимаю условия
+        </label>
+        <button id="accept-policy" disabled>Продолжить</button>
     </div>
 
     <div id="sell-form">
@@ -78,48 +110,92 @@
             <option value="TON">TON</option>
             <option value="USDT">USDT</option>
         </select>
-        <button id="confirm-sell">Подтвердить</button>
+        <button id="proceed-to-summary">Далее</button>
+    </div>
+
+    <div id="summary">
+        <p id="summary-text"></p>
+        <button id="confirm-sell">Подтвердить обмен</button>
+        <button id="back-to-form">Назад</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
 
-        // Connect Wallet (симуляция; позже интегрируй TON Connect SDK)
-        document.getElementById('connect-wallet').addEventListener('click', () => {
-            // Здесь код для привязки TON-кошелька (e.g. via @tonconnect/ui)
-            alert('Кошелёк привязан (симуляция).');
-            document.getElementById('sell-stars').disabled = false;
+        // TON Connect для привязки кошелька
+        const tonConnectUI = new TONConnectUI({
+            manifestUrl: 'https://your-site.com/tonconnect-manifest.json'  // Создай manifest.json по доке TON
         });
 
-        // Sell Stars
+        document.getElementById('connect-wallet').addEventListener('click', async () => {
+            try {
+                await tonConnectUI.connectWallet();
+                alert('Кошелёк привязан!');
+                document.getElementById('sell-stars').disabled = false;
+            } catch (e) {
+                alert('Ошибка привязки: ' + e.message);
+            }
+        });
+
+        // Sell Stars: Показать политику
         document.getElementById('sell-stars').addEventListener('click', () => {
             document.getElementById('policy').style.display = 'block';
         });
 
-        // Accept Policy
+        // Чекбокс для политики
+        const checkbox = document.getElementById('accept-checkbox');
+        checkbox.addEventListener('change', () => {
+            document.getElementById('accept-policy').disabled = !checkbox.checked;
+        });
+
+        // Accept Policy: Показать форму
         document.getElementById('accept-policy').addEventListener('click', () => {
             document.getElementById('policy').style.display = 'none';
             document.getElementById('sell-form').style.display = 'block';
         });
 
-        // Confirm Sell (симуляция; позже отправь данные в бот для создания инвойса)
-        document.getElementById('confirm-sell').addEventListener('click', () => {
-            const amount = document.getElementById('amount').value;
+        // Proceed to Summary
+        document.getElementById('proceed-to-summary').addEventListener('click', () => {
+            const amount = parseInt(document.getElementById('amount').value);
             const format = document.getElementById('format').value;
             if (amount < 500 || amount > 100000) {
                 alert('Неверное количество (500-100000).');
                 return;
             }
-            alert(`Вывод: ${amount} звёзд в ${format} (симуляция). Звёзды отправлены в бот, ожидание 21 день.`);
-            // Здесь: tg.sendData({amount, format}) в бот для обработки
+            const tgCommission = amount * 0.05;
+            const serviceCommission = amount * 0.06;
+            const totalCommission = tgCommission + serviceCommission;
+            const receive = amount - totalCommission;  // Примерно; доработай для реального расчёта
+            document.getElementById('summary-text').innerHTML = `
+                Количество: ${amount} звёзд<br>
+                Формат: ${format}<br>
+                Комиссия TG: ${tgCommission.toFixed(2)} (5%)<br>
+                Комиссия сервиса: ${serviceCommission.toFixed(2)} (6%)<br>
+                Итого к получению: ~${receive.toFixed(2)} (экономия 10%)
+            `;
+            document.getElementById('sell-form').style.display = 'none';
+            document.getElementById('summary').style.display = 'block';
+        });
+
+        // Back to Form
+        document.getElementById('back-to-form').addEventListener('click', () => {
+            document.getElementById('summary').style.display = 'none';
+            document.getElementById('sell-form').style.display = 'block';
+        });
+
+        // Confirm Sell: Отправить данные в бот
+        document.getElementById('confirm-sell').addEventListener('click', () => {
+            const amount = document.getElementById('amount').value;
+            const format = document.getElementById('format').value;
+            tg.sendData(JSON.stringify({amount, format}));
+            alert('Данные отправлены в бот для создания инвойса!');
             tg.close();
         });
 
         // Support
         document.getElementById('support').addEventListener('click', () => {
-            // Перекидываем в support-бота (создай отдельно)
-            tg.openTelegramLink('https://t.me/TGStarsSupport_bot'); // Замени на реальный
+            tg.openTelegramLink('https://t.me/TGStarsSupport_bot');  // Замени на реальный
         });
     </script>
 </body>
